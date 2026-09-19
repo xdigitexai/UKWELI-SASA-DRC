@@ -11,7 +11,7 @@
 
 ## Variables obligatoires
 
-`DATABASE_URL`, `AUTH_SECRET` (minimum 32 caractères aléatoires), `NEXT_PUBLIC_SITE_URL=https://www.ukwelisasa.drc.cd`, `UPLOAD_DIR`, `CRON_SECRET`. Les variables SMTP et VAPID de `.env.example` sont requises uniquement si les services correspondants sont raccordés.
+`DATABASE_URL`, `AUTH_SECRET` (minimum 32 caractères aléatoires), `NEXT_PUBLIC_SITE_URL=https://www.ukwelisasa.drc.cd`, `UPLOAD_DIR`, `CRON_SECRET`. Pour les notifications réelles, configurer SMTP et les trois variables VAPID de `.env.example`; générer les clés côté infrastructure et ne jamais les committer.
 
 ## Stockage et droits
 
@@ -26,7 +26,14 @@ POST https://www.ukwelisasa.drc.cd/api/cron/publish
 Authorization: Bearer <CRON_SECRET>
 ```
 
-Pas de queue, websocket ou worker séparé dans cette version.
+Appeler également toutes les minutes :
+
+```text
+POST https://www.ukwelisasa.drc.cd/api/cron/notifications
+Authorization: Bearer <CRON_SECRET>
+```
+
+La file de notifications est persistée dans PostgreSQL. Le cron prépare les destinataires, effectue des lots bornés, enregistre les états réels et réessaie les échecs temporaires. Aucun websocket n’est requis.
 
 ## Proxy inverse
 

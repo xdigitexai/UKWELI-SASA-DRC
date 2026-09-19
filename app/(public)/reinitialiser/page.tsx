@@ -1,0 +1,1 @@
+import {ReaderAuthForm} from "@/components/ReaderAuthForm";export default function Reset(){return <article className="article"><h1>Réinitialiser le mot de passe</h1><ReaderAuthForm mode="reset"/></article>}

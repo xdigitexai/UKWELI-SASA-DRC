@@ -2,6 +2,8 @@
 
 Plateforme média et CMS francophone pour la République Démocratique du Congo. Elle couvre la publication éditoriale, les archives par rubrique et mot-clé, les auteurs, la recherche, les vidéos et galeries, les commentaires modérés, la newsletter, la publicité, les alertes de dernière minute, les statistiques internes et l’administration par rôles.
 
+Les lecteurs peuvent aussi créer un compte facultatif, vérifier leur email, réinitialiser leur mot de passe, réagir aux articles, les enregistrer, commenter et répondre, suivre la publication, une rubrique ou un journaliste, et gérer séparément leurs préférences email et navigateur. Les notifications passent par une file persistante avec suivi des livraisons et reprises sur erreur.
+
 ## Stack
 
 - Next.js 15 / React 19 / TypeScript
@@ -35,7 +37,9 @@ npm start
 
 Le dossier défini par `UPLOAD_DIR` doit être persistant et accessible en écriture par le processus Node. En environnement distribué, remplacez le stockage local par un adaptateur objet/CDN avant d’accepter les téléversements.
 
-Appelez `POST /api/cron/publish` chaque minute avec l’en-tête `Authorization: Bearer $CRON_SECRET` pour publier les articles programmés. Le point de santé est `GET /api/health`.
+Appelez `POST /api/cron/publish` chaque minute avec l’en-tête `Authorization: Bearer $CRON_SECRET` pour publier les articles programmés. Appelez aussi `POST /api/cron/notifications` chaque minute avec le même en-tête pour préparer puis livrer les files email et Web Push. Le point de santé est `GET /api/health`.
+
+L’email utilise SMTP (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`). Web Push utilise les clés VAPID (`NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`). Aucun envoi n’est déclaré réussi lorsqu’un transport manque ou échoue.
 
 ## Modèle éditorial et sécurité
 

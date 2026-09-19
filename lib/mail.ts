@@ -1,15 +1,1 @@
-import nodemailer from "nodemailer";
-import {site} from "@/lib/site";
-const port = Number(process.env.SMTP_PORT || 465);
-export const mailConfigured = Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD);
-export const mailAddress = () => process.env.SMTP_FROM || process.env.SMTP_USER || "";
-export const mailSenderName = () => process.env.SMTP_FROM_NAME || site.name;
-export const mailFrom = () => {const address=mailAddress(),name=mailSenderName();return address&&name?`"${name}" <${address}>`:address};
-const transporter = mailConfigured
-  ? nodemailer.createTransport({host:process.env.SMTP_HOST,port,secure:port===465,auth:{user:process.env.SMTP_USER,pass:process.env.SMTP_PASSWORD}})
-  : null;
-export async function sendMail(mail:{to:string;subject:string;text:string;html?:string;replyTo?:string}){
-  if(!transporter)return false;
-  try{await transporter.sendMail({from:mailFrom(),...mail});return true}
-  catch(error){console.error("[mail] envoi échoué:",error);return false}
-}
+import nodemailer from "nodemailer";import {site} from "@/lib/site";const port=Number(process.env.SMTP_PORT||465);export const mailConfigured=Boolean(process.env.SMTP_HOST&&process.env.SMTP_USER&&process.env.SMTP_PASSWORD);export const mailAddress=()=>process.env.SMTP_FROM||process.env.SMTP_USER||"";export const mailSenderName=()=>process.env.SMTP_FROM_NAME||site.name;export const mailFrom=()=>{const address=mailAddress(),name=mailSenderName();return address&&name?`"${name}" <${address}>`:address};const transporter=mailConfigured?nodemailer.createTransport({host:process.env.SMTP_HOST,port,secure:port===465,auth:{user:process.env.SMTP_USER,pass:process.env.SMTP_PASSWORD}}):null;type Mail={to:string;subject:string;text:string;html?:string;replyTo?:string};export async function sendMail(mail:Mail):Promise<void>;export async function sendMail(to:string,subject:string,text:string,html?:string):Promise<void>;export async function sendMail(input:Mail|string,subject?:string,text?:string,html?:string){if(!transporter)throw new Error("SMTP_NOT_CONFIGURED");const mail=typeof input==="string"?{to:input,subject:subject!,text:text!,html}:input;await transporter.sendMail({from:mailFrom(),...mail})}export async function sendVerification(email:string,token:string){const url=`${site.url}/api/lecteur/verify?token=${encodeURIComponent(token)}`;return sendMail(email,`Confirmez votre compte ${site.name}`,`Confirmez votre adresse : ${url}`,`<p>Bienvenue sur ${site.name}.</p><p><a href="${url}">Confirmer mon adresse email</a></p>`)}

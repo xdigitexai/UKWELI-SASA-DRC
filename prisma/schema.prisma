@@ -1,9 +1,10 @@
 generator client {
   provider = "prisma-client-js"
 }
+
 datasource db {
   provider = "postgresql"
-  url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -11,6 +12,7 @@ enum Role {
   REDACTEUR_EN_CHEF
   JOURNALISTE
 }
+
 enum ArticleStatus {
   DRAFT
   IN_REVIEW
@@ -18,272 +20,516 @@ enum ArticleStatus {
   PUBLISHED
   ARCHIVED
 }
+
 enum CommentStatus {
   PENDING
   APPROVED
   REJECTED
   SPAM
 }
+
 enum SubscriberStatus {
   ACTIVE
   INACTIVE
   UNSUBSCRIBED
 }
+
 enum MediaType {
   IMAGE
   VIDEO
   DOCUMENT
 }
 
+enum ReactionType {
+  LIKE
+  DISLIKE
+}
+
+enum FollowType {
+  PUBLICATION
+  AUTHOR
+  CATEGORY
+}
+
+enum NotificationChannel {
+  EMAIL
+  PUSH
+  BOTH
+}
+
+enum NotificationAudience {
+  ALL
+  BREAKING
+  CATEGORY
+  AUTHOR
+}
+
+enum NotificationStatus {
+  PENDING
+  PROCESSING
+  SENT
+  PARTIAL
+  FAILED
+}
+
+enum DeliveryStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+  SKIPPED
+}
+
 model User {
-  id String @id @default(cuid())
-  email String @unique
+  id           String     @id @default(cuid())
+  email        String     @unique
   passwordHash String
-  role Role @default(JOURNALISTE)
-  active Boolean @default(true)
-  name String
-  slug String @unique
-  photo String?
-  biography String?
-  jobTitle String?
-  publicEmail Boolean @default(false)
-  socialLinks Json?
-  articles Article[] @relation("AuthorArticles")
-  coauthored Article[] @relation("CoAuthors")
-  media Media[]
-  auditLogs AuditLog[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role         Role       @default(JOURNALISTE)
+  active       Boolean    @default(true)
+  name         String
+  slug         String     @unique
+  photo        String?
+  biography    String?
+  jobTitle     String?
+  publicEmail  Boolean    @default(false)
+  socialLinks  Json?
+  articles     Article[]  @relation("AuthorArticles")
+  coauthored   Article[]  @relation("CoAuthors")
+  media        Media[]
+  auditLogs    AuditLog[]
+  followers    Follow[]   @relation("FollowedAuthor")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
   @@index([active, role])
 }
 
 model Article {
-  id String @id @default(cuid())
-  title String
-  slug String @unique
-  subtitle String?
-  excerpt String
-  content String @db.Text
-  featuredImage String?
-  imageCaption String?
-  imageCredit String?
-  location String?
-  source String?
-  sourceUrl String?
-  status ArticleStatus @default(DRAFT)
-  publishedAt DateTime?
-  scheduledAt DateTime?
-  submittedAt DateTime?
-  reviewedAt DateTime?
-  archivedAt DateTime?
-  seoTitle String?
-  seoDescription String?
-  canonicalUrl String?
-  socialImage String?
-  featured Boolean @default(false)
-  breaking Boolean @default(false)
-  editorsPick Boolean @default(false)
-  sponsored Boolean @default(false)
-  commentsEnabled Boolean @default(true)
-  authorId String
-  author User @relation("AuthorArticles", fields:[authorId], references:[id])
-  coAuthors User[] @relation("CoAuthors")
-  categoryId String
-  category Category @relation(fields:[categoryId], references:[id])
-  tags Tag[]
-  comments Comment[]
-  views ArticleView[]
-  breakingItems BreakingNews[]
-  videos Video[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String            @id @default(cuid())
+  title           String
+  slug            String            @unique
+  subtitle        String?
+  excerpt         String
+  content         String            @db.Text
+  featuredImage   String?
+  imageCaption    String?
+  imageCredit     String?
+  location        String?
+  source          String?
+  sourceUrl       String?
+  status          ArticleStatus     @default(DRAFT)
+  publishedAt     DateTime?
+  scheduledAt     DateTime?
+  submittedAt     DateTime?
+  reviewedAt      DateTime?
+  archivedAt      DateTime?
+  seoTitle        String?
+  seoDescription  String?
+  canonicalUrl    String?
+  socialImage     String?
+  featured        Boolean           @default(false)
+  breaking        Boolean           @default(false)
+  editorsPick     Boolean           @default(false)
+  sponsored       Boolean           @default(false)
+  commentsEnabled Boolean           @default(true)
+  authorId        String
+  author          User              @relation("AuthorArticles", fields: [authorId], references: [id])
+  coAuthors       User[]            @relation("CoAuthors")
+  categoryId      String
+  category        Category          @relation(fields: [categoryId], references: [id])
+  tags            Tag[]
+  comments        Comment[]
+  views           ArticleView[]
+  breakingItems   BreakingNews[]
+  videos          Video[]
+  reactions       ArticleReaction[]
+  saves           SavedArticle[]
+  notifications   Notification[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
   @@index([status, publishedAt])
   @@index([categoryId, status, publishedAt])
   @@index([featured, status])
 }
 
 model Category {
-  id String @id @default(cuid())
-  name String
-  slug String @unique
-  description String?
-  image String?
-  seoTitle String?
+  id             String     @id @default(cuid())
+  name           String
+  slug           String     @unique
+  description    String?
+  image          String?
+  seoTitle       String?
   seoDescription String?
-  position Int @default(0)
-  visible Boolean @default(true)
-  parentId String?
-  parent Category? @relation("CategoryTree", fields:[parentId], references:[id])
-  children Category[] @relation("CategoryTree")
-  articles Article[]
-  videos Video[]
-  galleries Gallery[]
+  position       Int        @default(0)
+  visible        Boolean    @default(true)
+  parentId       String?
+  parent         Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children       Category[] @relation("CategoryTree")
+  articles       Article[]
+  videos         Video[]
+  galleries      Gallery[]
+  followers      Follow[]   @relation("FollowedCategory")
+
   @@index([visible, position])
 }
+
 model Tag {
-  id String @id @default(cuid())
-  name String
-  slug String @unique
+  id       String    @id @default(cuid())
+  name     String
+  slug     String    @unique
   articles Article[]
 }
+
 model Media {
-  id String @id @default(cuid())
-  type MediaType
-  url String
+  id           String    @id @default(cuid())
+  type         MediaType
+  url          String
   thumbnailUrl String?
-  filename String
-  mimeType String?
-  size Int?
-  altText String?
-  caption String?
-  credit String?
-  authorId String?
-  author User? @relation(fields:[authorId], references:[id])
-  createdAt DateTime @default(now())
+  filename     String
+  mimeType     String?
+  size         Int?
+  altText      String?
+  caption      String?
+  credit       String?
+  authorId     String?
+  author       User?     @relation(fields: [authorId], references: [id])
+  createdAt    DateTime  @default(now())
+
   @@index([type, createdAt])
 }
+
 model Gallery {
-  id String @id @default(cuid())
-  title String
-  slug String @unique
-  description String?
-  coverImage String?
+  id           String         @id @default(cuid())
+  title        String
+  slug         String         @unique
+  description  String?
+  coverImage   String?
   photographer String?
-  publishedAt DateTime?
-  categoryId String?
-  category Category? @relation(fields:[categoryId], references:[id])
-  images GalleryImage[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  publishedAt  DateTime?
+  categoryId   String?
+  category     Category?      @relation(fields: [categoryId], references: [id])
+  images       GalleryImage[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 }
+
 model GalleryImage {
-  id String @id @default(cuid())
+  id        String  @id @default(cuid())
   galleryId String
-  gallery Gallery @relation(fields:[galleryId], references:[id], onDelete:Cascade)
-  url String
-  caption String?
-  credit String?
-  altText String?
-  position Int @default(0)
+  gallery   Gallery @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  url       String
+  caption   String?
+  credit    String?
+  altText   String?
+  position  Int     @default(0)
 }
+
 model Video {
-  id String @id @default(cuid())
-  title String
-  slug String @unique
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
   description String?
-  provider String
-  embedUrl String
-  thumbnail String?
+  provider    String
+  embedUrl    String
+  thumbnail   String?
   publishedAt DateTime?
-  articleId String?
-  article Article? @relation(fields:[articleId], references:[id])
-  categoryId String?
-  category Category? @relation(fields:[categoryId], references:[id])
-  createdAt DateTime @default(now())
+  articleId   String?
+  article     Article?  @relation(fields: [articleId], references: [id])
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime  @default(now())
 }
+
 model Comment {
-  id String @id @default(cuid())
-  articleId String
-  article Article @relation(fields:[articleId], references:[id], onDelete:Cascade)
-  name String
-  email String
-  content String @db.Text
-  status CommentStatus @default(PENDING)
-  ipHash String?
+  id            String            @id @default(cuid())
+  articleId     String
+  article       Article           @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  name          String
+  email         String
+  readerId      String?
+  reader        Reader?           @relation(fields: [readerId], references: [id], onDelete: SetNull)
+  parentId      String?
+  parent        Comment?          @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies       Comment[]         @relation("CommentReplies")
+  content       String            @db.Text
+  status        CommentStatus     @default(PENDING)
+  ipHash        String?
   userAgentHash String?
-  createdAt DateTime @default(now())
-  moderatedAt DateTime?
+  createdAt     DateTime          @default(now())
+  moderatedAt   DateTime?
+  updatedAt     DateTime          @updatedAt
+  reactions     CommentReaction[]
+  reports       CommentReport[]
+
   @@index([articleId, status, createdAt])
 }
+
 model BreakingNews {
-  id String @id @default(cuid())
-  text String
-  url String?
-  active Boolean @default(true)
-  priority Int @default(0)
-  startsAt DateTime @default(now())
-  endsAt DateTime?
+  id        String    @id @default(cuid())
+  text      String
+  url       String?
+  active    Boolean   @default(true)
+  priority  Int       @default(0)
+  startsAt  DateTime  @default(now())
+  endsAt    DateTime?
   articleId String?
-  article Article? @relation(fields:[articleId], references:[id])
-  createdAt DateTime @default(now())
+  article   Article?  @relation(fields: [articleId], references: [id])
+  createdAt DateTime  @default(now())
+
   @@index([active, startsAt, endsAt, priority])
 }
+
 model NewsletterSubscriber {
-  id String @id @default(cuid())
-  email String @unique
-  status SubscriberStatus @default(ACTIVE)
-  verified Boolean @default(false)
-  verifyToken String?
-  unsubscribeToken String @unique @default(cuid())
-  subscribedAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String           @id @default(cuid())
+  email            String           @unique
+  status           SubscriberStatus @default(ACTIVE)
+  verified         Boolean          @default(false)
+  verifyToken      String?
+  unsubscribeToken String           @unique @default(cuid())
+  subscribedAt     DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
   @@index([status, subscribedAt])
 }
+
 model Advertisement {
-  id String @id @default(cuid())
-  name String
-  advertiser String
-  imageUrl String
+  id             String    @id @default(cuid())
+  name           String
+  advertiser     String
+  imageUrl       String
   destinationUrl String
-  placement String
-  startsAt DateTime @default(now())
-  endsAt DateTime?
-  enabled Boolean @default(true)
-  clicks Int @default(0)
-  impressions Int @default(0)
-  createdAt DateTime @default(now())
+  placement      String
+  startsAt       DateTime  @default(now())
+  endsAt         DateTime?
+  enabled        Boolean   @default(true)
+  clicks         Int       @default(0)
+  impressions    Int       @default(0)
+  createdAt      DateTime  @default(now())
+
   @@index([placement, enabled, startsAt, endsAt])
 }
+
 model Page {
-  id String @id @default(cuid())
-  title String
-  slug String @unique
-  content String @db.Text
-  seoTitle String?
+  id             String   @id @default(cuid())
+  title          String
+  slug           String   @unique
+  content        String   @db.Text
+  seoTitle       String?
   seoDescription String?
-  published Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  published      Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
+
 model ContactMessage {
-  id String @id @default(cuid())
-  name String
-  email String
-  phone String?
-  subject String
-  message String @db.Text
-  ipHash String?
-  read Boolean @default(false)
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String
+  message   String   @db.Text
+  ipHash    String?
+  read      Boolean  @default(false)
   createdAt DateTime @default(now())
+
   @@index([read, createdAt])
 }
+
 model ArticleView {
-  id String @id @default(cuid())
-  articleId String
-  article Article @relation(fields:[articleId], references:[id], onDelete:Cascade)
+  id          String   @id @default(cuid())
+  articleId   String
+  article     Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
   visitorHash String
-  viewedAt DateTime @default(now())
+  viewedAt    DateTime @default(now())
+
   @@unique([articleId, visitorHash, viewedAt])
   @@index([articleId, viewedAt])
 }
+
 model Setting {
-  id String @id @default(cuid())
-  key String @unique
-  value Json
-  group String
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  group     String
   updatedAt DateTime @updatedAt
+
   @@index([group])
 }
+
 model AuditLog {
-  id String @id @default(cuid())
-  userId String?
-  user User? @relation(fields:[userId], references:[id])
-  action String
-  entity String
-  entityId String?
-  details Json?
-  ipHash String?
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  details   Json?
+  ipHash    String?
   createdAt DateTime @default(now())
+
   @@index([entity, entityId, createdAt])
   @@index([userId, createdAt])
+}
+
+model Reader {
+  id                String                  @id @default(cuid())
+  email             String                  @unique
+  passwordHash      String
+  name              String
+  verifiedAt        DateTime?
+  active            Boolean                 @default(true)
+  verificationToken String?                 @unique
+  resetToken        String?                 @unique
+  resetExpiresAt    DateTime?
+  reactions         ArticleReaction[]
+  commentReactions  CommentReaction[]
+  comments          Comment[]
+  reports           CommentReport[]
+  follows           Follow[]
+  savedArticles     SavedArticle[]
+  pushSubscriptions PushSubscription[]
+  preference        NotificationPreference?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  @@index([active, createdAt])
+}
+
+model ArticleReaction {
+  id        String       @id @default(cuid())
+  readerId  String
+  reader    Reader       @relation(fields: [readerId], references: [id], onDelete: Cascade)
+  articleId String
+  article   Article      @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  type      ReactionType
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([readerId, articleId])
+  @@index([articleId, type])
+}
+
+model CommentReaction {
+  id        String   @id @default(cuid())
+  readerId  String
+  reader    Reader   @relation(fields: [readerId], references: [id], onDelete: Cascade)
+  commentId String
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([readerId, commentId])
+  @@index([commentId])
+}
+
+model CommentReport {
+  id        String   @id @default(cuid())
+  readerId  String
+  reader    Reader   @relation(fields: [readerId], references: [id], onDelete: Cascade)
+  commentId String
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  reason    String
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([readerId, commentId])
+  @@index([resolved, createdAt])
+}
+
+model Follow {
+  id         String     @id @default(cuid())
+  readerId   String
+  reader     Reader     @relation(fields: [readerId], references: [id], onDelete: Cascade)
+  type       FollowType
+  targetKey  String
+  authorId   String?
+  author     User?      @relation("FollowedAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  categoryId String?
+  category   Category?  @relation("FollowedCategory", fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt  DateTime   @default(now())
+
+  @@unique([readerId, type, targetKey])
+  @@index([type, authorId])
+  @@index([type, categoryId])
+}
+
+model SavedArticle {
+  id        String   @id @default(cuid())
+  readerId  String
+  reader    Reader   @relation(fields: [readerId], references: [id], onDelete: Cascade)
+  articleId String
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([readerId, articleId])
+  @@index([articleId])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  readerId  String?
+  reader    Reader?  @relation(fields: [readerId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique @db.Text
+  p256dh    String
+  auth      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([readerId, active])
+}
+
+model NotificationPreference {
+  id                 String   @id @default(cuid())
+  readerId           String   @unique
+  reader             Reader   @relation(fields: [readerId], references: [id], onDelete: Cascade)
+  browserEnabled     Boolean  @default(false)
+  emailEnabled       Boolean  @default(false)
+  breakingNews       Boolean  @default(true)
+  allNews            Boolean  @default(false)
+  followedCategories Boolean  @default(true)
+  followedAuthors    Boolean  @default(true)
+  newsletter         Boolean  @default(false)
+  updatedAt          DateTime @updatedAt
+}
+
+model Notification {
+  id             String                 @id @default(cuid())
+  title          String
+  message        String
+  imageUrl       String?
+  destinationUrl String
+  audience       NotificationAudience
+  channel        NotificationChannel
+  categoryId     String?
+  authorId       String?
+  articleId      String?
+  article        Article?               @relation(fields: [articleId], references: [id], onDelete: SetNull)
+  scheduledAt    DateTime?
+  status         NotificationStatus     @default(PENDING)
+  createdById    String
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  deliveries     NotificationDelivery[]
+
+  @@index([status, scheduledAt])
+  @@index([audience, categoryId, authorId])
+}
+
+model NotificationDelivery {
+  id             String              @id @default(cuid())
+  notificationId String
+  notification   Notification        @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  channel        NotificationChannel
+  recipientKey   String
+  status         DeliveryStatus      @default(PENDING)
+  attempts       Int                 @default(0)
+  lastError      String?
+  sentAt         DateTime?
+  nextAttemptAt  DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@unique([notificationId, channel, recipientKey])
+  @@index([status, nextAttemptAt])
 }

@@ -1,0 +1,1 @@
+import Link from "next/link";import {ReaderAuthForm} from "@/components/ReaderAuthForm";export default function Login(){return <article className="article"><h1>Connexion lecteur</h1><ReaderAuthForm mode="login"/><p><Link href="/mot-de-passe-oublie">Mot de passe oublié ?</Link></p><p>Pas encore de compte ? <Link href="/inscription">Créer un compte</Link></p></article>}

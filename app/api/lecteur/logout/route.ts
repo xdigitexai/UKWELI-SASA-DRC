@@ -1,0 +1,1 @@
+import {NextResponse} from "next/server";import {destroyReaderSession} from "@/lib/reader-auth";export async function POST(req:Request){await destroyReaderSession();return NextResponse.redirect(new URL("/",req.url),303)}
