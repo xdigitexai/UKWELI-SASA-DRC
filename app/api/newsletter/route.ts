@@ -11,15 +11,17 @@ export async function POST(req:Request){
   if(existing?.status==="ACTIVE")return NextResponse.json({message:"Cette adresse est déjà inscrite."});
   const sub=await db.newsletterSubscriber.upsert({where:{email},update:{status:"ACTIVE",subscribedAt:new Date()},create:{email}});
   const unsubscribe=`${site.url}/api/newsletter/unsubscribe?token=${sub.unsubscribeToken}`;
-  await sendMail({
-    to:sub.email,
-    subject:`Inscription confirmée — ${site.name}`,
-    text:`${site.name}\n${site.slogan}\n\nInscription confirmée\n\nBonjour,\n\nVotre inscription à la lettre de ${site.name} est bien enregistrée.\n\nVous recevrez désormais nos dernières actualités selon vos préférences.\n\nVoir les dernières actualités : ${site.url}\n\nVous pouvez vous désabonner à tout moment :\n${unsubscribe}\n\n${emailFooterText()}`,
-    html:emailLayout({
-      heading:"Inscription confirmée",
-      paragraphs:["Bonjour,",`Votre inscription à la lettre de ${site.name} est bien enregistrée.`,"Vous recevrez désormais nos dernières actualités selon vos préférences."],
-      body:emailButton({label:"VOIR LES DERNIÈRES ACTUALITÉS",url:site.url})+emailNote("Vous pouvez vous désabonner à tout moment.",{label:"Se désabonner",url:unsubscribe}),
-    }),
-  });
+  try{
+    await sendMail({
+      to:sub.email,
+      subject:`Inscription confirmée — ${site.name}`,
+      text:`${site.name}\n${site.slogan}\n\nInscription confirmée\n\nBonjour,\n\nVotre inscription à la lettre de ${site.name} est bien enregistrée.\n\nVous recevrez désormais nos dernières actualités selon vos préférences.\n\nVoir les dernières actualités : ${site.url}\n\nVous pouvez vous désabonner à tout moment :\n${unsubscribe}\n\n${emailFooterText()}`,
+      html:emailLayout({
+        heading:"Inscription confirmée",
+        paragraphs:["Bonjour,",`Votre inscription à la lettre de ${site.name} est bien enregistrée.`,"Vous recevrez désormais nos dernières actualités selon vos préférences."],
+        body:emailButton({label:"VOIR LES DERNIÈRES ACTUALITÉS",url:site.url})+emailNote("Vous pouvez vous désabonner à tout moment.",{label:"Se désabonner",url:unsubscribe}),
+      }),
+    });
+  }catch(error){console.error("[mail] confirmation d’inscription échouée:",error)}
   return NextResponse.json({message:"Inscription enregistrée. Merci !"});
 }

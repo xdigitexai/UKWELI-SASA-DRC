@@ -9,14 +9,16 @@ export async function POST(req:Request){
   if(recent>=3)return NextResponse.json({message:"Limite atteinte. Réessayez plus tard."},{status:429});
   const name=cleanText(p.data.name,100),phone=cleanText(p.data.phone||"",30),subject=cleanText(p.data.subject,180),message=cleanText(p.data.message);
   await db.contactMessage.create({data:{name,email:p.data.email,phone:phone||null,subject,message,ipHash}});
-  await sendMail({
-    to:mailAddress(),replyTo:p.data.email,subject:`[${site.name}] Contact : ${subject}`,
-    text:`Nouveau message depuis le formulaire de contact.\n\nNom : ${name}\nEmail : ${p.data.email}\nTéléphone : ${phone||"—"}\nSujet : ${subject}\n\n${message}\n\n${emailFooterText()}`,
-    html:emailLayout({
-      heading:"Nouveau message de contact",
-      paragraphs:[`<strong>Nom :</strong> ${esc(name)}`,`<strong>Email :</strong> ${esc(p.data.email)}`,`<strong>Téléphone :</strong> ${esc(phone||"—")}`,`<strong>Sujet :</strong> ${esc(subject)}`],
-      body:`<div style="margin-top:20px;padding:16px;background:#f9fafb;border-radius:8px;font-size:15px;line-height:1.7;color:#374151;white-space:pre-wrap;">${esc(message)}</div>`,
-    }),
-  });
+  try{
+    await sendMail({
+      to:mailAddress(),replyTo:p.data.email,subject:`[${site.name}] Contact : ${subject}`,
+      text:`Nouveau message depuis le formulaire de contact.\n\nNom : ${name}\nEmail : ${p.data.email}\nTéléphone : ${phone||"—"}\nSujet : ${subject}\n\n${message}\n\n${emailFooterText()}`,
+      html:emailLayout({
+        heading:"Nouveau message de contact",
+        paragraphs:[`<strong>Nom :</strong> ${esc(name)}`,`<strong>Email :</strong> ${esc(p.data.email)}`,`<strong>Téléphone :</strong> ${esc(phone||"—")}`,`<strong>Sujet :</strong> ${esc(subject)}`],
+        body:`<div style="margin-top:20px;padding:16px;background:#f9fafb;border-radius:8px;font-size:15px;line-height:1.7;color:#374151;white-space:pre-wrap;">${esc(message)}</div>`,
+      }),
+    });
+  }catch(error){console.error("[mail] notification de contact échouée:",error)}
   return NextResponse.json({message:"Votre message a bien été transmis."});
 }
