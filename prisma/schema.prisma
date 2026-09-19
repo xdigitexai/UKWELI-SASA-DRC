@@ -1,0 +1,289 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMINISTRATEUR
+  REDACTEUR_EN_CHEF
+  JOURNALISTE
+}
+enum ArticleStatus {
+  DRAFT
+  IN_REVIEW
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SPAM
+}
+enum SubscriberStatus {
+  ACTIVE
+  INACTIVE
+  UNSUBSCRIBED
+}
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+model User {
+  id String @id @default(cuid())
+  email String @unique
+  passwordHash String
+  role Role @default(JOURNALISTE)
+  active Boolean @default(true)
+  name String
+  slug String @unique
+  photo String?
+  biography String?
+  jobTitle String?
+  publicEmail Boolean @default(false)
+  socialLinks Json?
+  articles Article[] @relation("AuthorArticles")
+  coauthored Article[] @relation("CoAuthors")
+  media Media[]
+  auditLogs AuditLog[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([active, role])
+}
+
+model Article {
+  id String @id @default(cuid())
+  title String
+  slug String @unique
+  subtitle String?
+  excerpt String
+  content String @db.Text
+  featuredImage String?
+  imageCaption String?
+  imageCredit String?
+  location String?
+  source String?
+  sourceUrl String?
+  status ArticleStatus @default(DRAFT)
+  publishedAt DateTime?
+  scheduledAt DateTime?
+  submittedAt DateTime?
+  reviewedAt DateTime?
+  archivedAt DateTime?
+  seoTitle String?
+  seoDescription String?
+  canonicalUrl String?
+  socialImage String?
+  featured Boolean @default(false)
+  breaking Boolean @default(false)
+  editorsPick Boolean @default(false)
+  sponsored Boolean @default(false)
+  commentsEnabled Boolean @default(true)
+  authorId String
+  author User @relation("AuthorArticles", fields:[authorId], references:[id])
+  coAuthors User[] @relation("CoAuthors")
+  categoryId String
+  category Category @relation(fields:[categoryId], references:[id])
+  tags Tag[]
+  comments Comment[]
+  views ArticleView[]
+  breakingItems BreakingNews[]
+  videos Video[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([status, publishedAt])
+  @@index([categoryId, status, publishedAt])
+  @@index([featured, status])
+}
+
+model Category {
+  id String @id @default(cuid())
+  name String
+  slug String @unique
+  description String?
+  image String?
+  seoTitle String?
+  seoDescription String?
+  position Int @default(0)
+  visible Boolean @default(true)
+  parentId String?
+  parent Category? @relation("CategoryTree", fields:[parentId], references:[id])
+  children Category[] @relation("CategoryTree")
+  articles Article[]
+  videos Video[]
+  galleries Gallery[]
+  @@index([visible, position])
+}
+model Tag {
+  id String @id @default(cuid())
+  name String
+  slug String @unique
+  articles Article[]
+}
+model Media {
+  id String @id @default(cuid())
+  type MediaType
+  url String
+  thumbnailUrl String?
+  filename String
+  mimeType String?
+  size Int?
+  altText String?
+  caption String?
+  credit String?
+  authorId String?
+  author User? @relation(fields:[authorId], references:[id])
+  createdAt DateTime @default(now())
+  @@index([type, createdAt])
+}
+model Gallery {
+  id String @id @default(cuid())
+  title String
+  slug String @unique
+  description String?
+  coverImage String?
+  photographer String?
+  publishedAt DateTime?
+  categoryId String?
+  category Category? @relation(fields:[categoryId], references:[id])
+  images GalleryImage[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model GalleryImage {
+  id String @id @default(cuid())
+  galleryId String
+  gallery Gallery @relation(fields:[galleryId], references:[id], onDelete:Cascade)
+  url String
+  caption String?
+  credit String?
+  altText String?
+  position Int @default(0)
+}
+model Video {
+  id String @id @default(cuid())
+  title String
+  slug String @unique
+  description String?
+  provider String
+  embedUrl String
+  thumbnail String?
+  publishedAt DateTime?
+  articleId String?
+  article Article? @relation(fields:[articleId], references:[id])
+  categoryId String?
+  category Category? @relation(fields:[categoryId], references:[id])
+  createdAt DateTime @default(now())
+}
+model Comment {
+  id String @id @default(cuid())
+  articleId String
+  article Article @relation(fields:[articleId], references:[id], onDelete:Cascade)
+  name String
+  email String
+  content String @db.Text
+  status CommentStatus @default(PENDING)
+  ipHash String?
+  userAgentHash String?
+  createdAt DateTime @default(now())
+  moderatedAt DateTime?
+  @@index([articleId, status, createdAt])
+}
+model BreakingNews {
+  id String @id @default(cuid())
+  text String
+  url String?
+  active Boolean @default(true)
+  priority Int @default(0)
+  startsAt DateTime @default(now())
+  endsAt DateTime?
+  articleId String?
+  article Article? @relation(fields:[articleId], references:[id])
+  createdAt DateTime @default(now())
+  @@index([active, startsAt, endsAt, priority])
+}
+model NewsletterSubscriber {
+  id String @id @default(cuid())
+  email String @unique
+  status SubscriberStatus @default(ACTIVE)
+  verified Boolean @default(false)
+  verifyToken String?
+  unsubscribeToken String @unique @default(cuid())
+  subscribedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([status, subscribedAt])
+}
+model Advertisement {
+  id String @id @default(cuid())
+  name String
+  advertiser String
+  imageUrl String
+  destinationUrl String
+  placement String
+  startsAt DateTime @default(now())
+  endsAt DateTime?
+  enabled Boolean @default(true)
+  clicks Int @default(0)
+  impressions Int @default(0)
+  createdAt DateTime @default(now())
+  @@index([placement, enabled, startsAt, endsAt])
+}
+model Page {
+  id String @id @default(cuid())
+  title String
+  slug String @unique
+  content String @db.Text
+  seoTitle String?
+  seoDescription String?
+  published Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model ContactMessage {
+  id String @id @default(cuid())
+  name String
+  email String
+  phone String?
+  subject String
+  message String @db.Text
+  ipHash String?
+  read Boolean @default(false)
+  createdAt DateTime @default(now())
+  @@index([read, createdAt])
+}
+model ArticleView {
+  id String @id @default(cuid())
+  articleId String
+  article Article @relation(fields:[articleId], references:[id], onDelete:Cascade)
+  visitorHash String
+  viewedAt DateTime @default(now())
+  @@unique([articleId, visitorHash, viewedAt])
+  @@index([articleId, viewedAt])
+}
+model Setting {
+  id String @id @default(cuid())
+  key String @unique
+  value Json
+  group String
+  updatedAt DateTime @updatedAt
+  @@index([group])
+}
+model AuditLog {
+  id String @id @default(cuid())
+  userId String?
+  user User? @relation(fields:[userId], references:[id])
+  action String
+  entity String
+  entityId String?
+  details Json?
+  ipHash String?
+  createdAt DateTime @default(now())
+  @@index([entity, entityId, createdAt])
+  @@index([userId, createdAt])
+}

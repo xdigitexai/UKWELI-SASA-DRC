@@ -1,0 +1,1 @@
+import {ContactForm} from "@/components/ContactForm";export default function Contact(){return <article className="article"><h1>Contact</h1><p>Une information, une correction ou une question pour la rédaction ? Écrivez-nous.</p><ContactForm/></article>}

@@ -1,0 +1,1 @@
+"use client";export default function ErrorPage({reset}:{reset:()=>void}){return <main className="container main empty"><h1>Une erreur est survenue</h1><p>La rédaction a été informée. Veuillez réessayer.</p><button className="button" onClick={reset}>Réessayer</button></main>}
