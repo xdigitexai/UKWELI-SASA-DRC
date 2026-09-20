@@ -26,7 +26,7 @@ export function NotificationPrompt({mode="auto"}:{mode?:"auto"|"settings"}){
   },[]);
   useEffect(()=>{
     refresh();
-    const onOpen=()=>{if(!supported()||Notification.permission!=="default")return;clearSnooze();setState("prompt")};
+    const onOpen=()=>{if(!supported())return;if(Notification.permission==="default"){clearSnooze();setState("prompt");return}if(Notification.permission==="granted"){setState("working");subscribe().then(()=>{setState("granted");flash("Notifications activées")}).catch(()=>{setState("idle");flash("Activation impossible pour le moment.")});}};
     window.addEventListener("ukweli-notif-open",onOpen);
     return ()=>{window.removeEventListener("ukweli-notif-open",onOpen)};
   },[refresh]);
@@ -40,9 +40,9 @@ export function NotificationPrompt({mode="auto"}:{mode?:"auto"|"settings"}){
     setState("working");setMsg("");
     try{
       const perm=await Notification.requestPermission();
-      if(perm!=="granted"){setState(perm==="denied"?"denied":"idle");setMsg(perm==="denied"?"Les notifications sont bloquées par votre navigateur.":"Autorisation non accordée.");return}
+      if(perm!=="granted"){if(perm==="denied"){setState("denied");setMsg("Les notifications sont bloquées par votre navigateur.")}else{snooze(1);setState("idle");flash("Autorisation non accordée.")}return}
       await subscribe();clearSnooze();setState("granted");flash("Notifications activées");
-    }catch{setState("idle");setMsg("Activation impossible pour le moment.")}
+    }catch{snooze(1);setState("idle");flash("Activation impossible pour le moment.")}
   },[flash]);
   const later=useCallback(()=>{snooze(3);setState("idle")},[]);
   let body:React.ReactNode=null;
