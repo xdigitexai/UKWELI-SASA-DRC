@@ -1,74 +1,125 @@
 "use client";import {useEffect,useRef,useState,type CSSProperties} from "react";
-type Kind="share"|"whatsapp"|"facebook"|"x"|"linkedin"|"telegram"|"mail"|"link";
-const PATHS:Record<Kind,string[]>={
-share:["M12 16V4","M8 8l4-4 4 4","M5 13v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"],
-whatsapp:["M4.5 5.5h15A1.5 1.5 0 0 1 21 7v9a1.5 1.5 0 0 1-1.5 1.5H10.5L6 20.8v-3.3H4.5A1.5 1.5 0 0 1 3 16V7a1.5 1.5 0 0 1 1.5-1.5Z","M8.8 8.8c0 3.4 2.6 6 6 6 .6 0 1-.4 1-1v-.6l-1.7-.7-.7.7a5 5 0 0 1-2.3-2.3l.7-.7-.7-1.7h-.6c-.6 0-1 .4-1 1Z"],
-facebook:["M14.6 8.6H17V5h-2.4A4.6 4.6 0 0 0 10 9.6v2.2H8V15h2v6h3.4v-6H16l.9-3.2h-3.5V9.6c0-.6.4-1 1.2-1Z"],
-x:["M5 4l14 16","M19 4 5 20"],
-linkedin:["M5 9.6h3.2V20H5z","M6.6 4.6a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 0 0 0-3.6Z","M11.3 9.6h3V11a3.4 3.4 0 0 1 5.9 2.4V20h-3.2v-5.9a1.5 1.5 0 0 0-3 0V20h-2.7Z"],
-telegram:["M21 4 2.8 11.7l5.8 2.1 1.9 5.7 3-4.2","M8.6 13.8 21 4"],
-mail:["M3 6.5h18V19H3z","M3.6 7l8.4 6 8.4-6"],
-link:["M9.5 14.5 14.5 9.5","M8.7 7.6H7.2a4.5 4.5 0 0 0 0 9h1.5","M15.3 7.6h1.5a4.5 4.5 0 0 1 0 9h-1.5"]};
-const Icon=({kind,size=18}:{kind:Kind;size?:number})=><svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{PATHS[kind].map((d,i)=><path key={i} d={d}/>)}</svg>;
+type Kind="share"|"close"|"whatsapp"|"facebook"|"x"|"linkedin"|"telegram"|"mail"|"link";
+type Option={kind:Kind;label:string;href:string;tone:string;blank:boolean};
+const ICONS:Record<Kind,string[]>={
+share:["M12 15V3","M8 7l4-4 4 4","M5 13v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"],
+close:["M6 6 18 18","M18 6 6 18"],
+whatsapp:["M20.6 11.7a8.6 8.6 0 0 1-12.8 7.5L3.4 20.6l1.5-4.2A8.6 8.6 0 1 1 20.6 11.7Z","M8.9 7.9h1.3l1 2.3-.9.9a5.4 5.4 0 0 0 3.6 3.6l.9-.9 2.3 1v1.3a1 1 0 0 1-1.1 1 7.7 7.7 0 0 1-8.1-8.1 1 1 0 0 1 1-1.1Z"],
+facebook:["M12 3.2a8.8 8.8 0 1 0 0 17.6 8.8 8.8 0 0 0 0-17.6Z","M14.4 8.6h-1.2c-.9 0-1.4.5-1.4 1.5v1.3h2.4l-.3 2.2h-2.1v5.2","M9.9 11.4h4.4"],
+x:["M5 4.4 19 19.6","M19 4.4 5 19.6"],
+linkedin:["M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z","M8.3 10.3V17","M8.3 7.1h.01","M12.3 17v-6.7","M12.3 13.1a2.4 2.4 0 0 1 4.8 0V17"],
+telegram:["M21.4 4.3 2.9 11.3a.45.45 0 0 0 .05.84l4.4 1.4 1.7 4.7a.45.45 0 0 0 .79.12l2.2-2.6 4.3 3.1a.45.45 0 0 0 .71-.28l2.9-13.6a.45.45 0 0 0-.6-.5Z","M7.4 13.5 21.4 4.3","M7.4 13.5l1.7 4.7"],
+mail:["M3.5 5.8h17v12.4h-17z","M4 6.4 12 12.5l8-6.1"],
+link:["M10.6 13.4a3.6 3.6 0 0 0 5.1 0l2.3-2.3a3.6 3.6 0 0 0-5.1-5.1l-1 1","M13.4 10.6a3.6 3.6 0 0 0-5.1 0l-2.3 2.3a3.6 3.6 0 0 0 5.1 5.1l1-1"]};
 const BRAND="UKWELISASA.DRC.CD";
-const HEAD:CSSProperties={display:"flex",alignItems:"center",gap:".55rem",padding:".5rem .6rem",fontSize:".85rem",borderRadius:"6px",color:"inherit",textDecoration:"none",width:"100%",background:"transparent",border:0,textAlign:"left",cursor:"pointer"};
-const PANEL:CSSProperties={position:"absolute",top:"calc(100% + .45rem)",left:0,zIndex:60,minWidth:220,background:"var(--paper,#fff)",border:"1px solid var(--line,#dce2e7)",borderRadius:"10px",boxShadow:"0 14px 34px rgba(16,42,67,.2)",padding:".35rem",display:"grid",gap:"2px"};
+const Icon=({kind,size=20}:{kind:Kind;size?:number})=><svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">{ICONS[kind].map((d,i)=><path key={i} d={d}/>)}</svg>;
+const FULL:CSSProperties={display:"inline-flex",alignItems:"center",justifyContent:"center",gap:".5rem",color:"#fff"};
+const SMALL:CSSProperties={display:"inline-flex",alignItems:"center",gap:".35rem",background:"var(--red,#c51d2e)",borderColor:"var(--red,#c51d2e)",color:"#fff",fontSize:".75rem",fontWeight:700,padding:".32rem .6rem"};
+const OPTION:CSSProperties={display:"flex",alignItems:"center",gap:".5rem",minHeight:46,padding:".5rem .65rem",border:"1px solid var(--line,#dce2e7)",borderRadius:9,background:"#fff",color:"var(--ink,#101820)",font:"inherit",fontSize:".82rem",fontWeight:600,textDecoration:"none",cursor:"pointer",textAlign:"left",width:"100%"};
+const CLOSE:CSSProperties={display:"grid",placeItems:"center",width:34,height:34,flex:"0 0 auto",border:"1px solid var(--line,#dce2e7)",borderRadius:999,background:"#fff",color:"var(--ink,#101820)",cursor:"pointer",padding:0};
 export function ShareButtons({url,title,variant="full"}:{url:string;title:string;variant?:"full"|"compact"}){
-const[open,setOpen]=useState(false);
-const[note,setNote]=useState("");
-const box=useRef<HTMLSpanElement|null>(null);
-const timer=useRef<ReturnType<typeof setTimeout>|null>(null);
 const compact=variant==="compact";
-useEffect(()=>()=>{if(timer.current)clearTimeout(timer.current)},[]);
+const[open,setOpen]=useState(false);
+const[shown,setShown]=useState(false);
+const[note,setNote]=useState("");
+const[mobile,setMobile]=useState(false);
+const[reduce,setReduce]=useState(false);
+const trigger=useRef<HTMLButtonElement|null>(null);
+const closer=useRef<HTMLButtonElement|null>(null);
+const exit=useRef<ReturnType<typeof setTimeout>|null>(null);
+const toast=useRef<ReturnType<typeof setTimeout>|null>(null);
+useEffect(()=>{
+const small=window.matchMedia("(max-width: 640px)"),calm=window.matchMedia("(prefers-reduced-motion: reduce)");
+const sync=()=>{setMobile(small.matches);setReduce(calm.matches)};
+sync();
+small.addEventListener("change",sync);
+calm.addEventListener("change",sync);
+return ()=>{small.removeEventListener("change",sync);calm.removeEventListener("change",sync)};
+},[]);
+useEffect(()=>()=>{if(exit.current)clearTimeout(exit.current);if(toast.current)clearTimeout(toast.current)},[]);
 useEffect(()=>{
 if(!open)return;
-const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape")setOpen(false)};
-const onDown=(e:MouseEvent)=>{if(box.current&&e.target instanceof Node&&box.current.contains(e.target))return;setOpen(false)};
+const previous=document.body.style.overflow;
+document.body.style.overflow="hidden";
+closer.current?.focus();
+const frame=window.requestAnimationFrame(()=>setShown(true));
+const onKey=(event:KeyboardEvent)=>{if(event.key==="Escape"){event.preventDefault();dismiss()}};
 document.addEventListener("keydown",onKey);
-document.addEventListener("mousedown",onDown);
-return ()=>{document.removeEventListener("keydown",onKey);document.removeEventListener("mousedown",onDown)};
+return ()=>{
+window.cancelAnimationFrame(frame);
+document.removeEventListener("keydown",onKey);
+document.body.style.overflow=previous;
+};
 },[open]);
-function flash(text:string){setNote(text);if(timer.current)clearTimeout(timer.current);timer.current=setTimeout(()=>setNote(""),2000)}
+function dismiss(){
+setShown(false);
+if(exit.current)clearTimeout(exit.current);
+exit.current=setTimeout(()=>{setOpen(false);exit.current=null},window.matchMedia("(prefers-reduced-motion: reduce)").matches?0:200);
+if(trigger.current)trigger.current.focus();
+}
+function openSheet(){
+if(exit.current){clearTimeout(exit.current);exit.current=null}
+setShown(false);
+setOpen(true);
+}
+function flash(text:string){
+setNote(text);
+if(toast.current)clearTimeout(toast.current);
+toast.current=setTimeout(()=>{setNote("");toast.current=null},2500);
+}
 async function share(){
 const text=`${title} — ${BRAND}`;
-if(typeof navigator.share==="function"){
-try{await navigator.share({title,text,url});return}
-catch(e){if((e as {name?:string})?.name==="AbortError")return}
+const nav=navigator as Navigator&{share?:(data:{title:string;text:string;url:string})=>Promise<void>};
+if(typeof nav.share==="function"){
+try{await nav.share({title,text,url});return}
+catch(error){if((error as {name?:string}|null)?.name==="AbortError")return}
 }
-setOpen(o=>!o);
+openSheet();
 }
 async function copy(){
+let done=false;
 try{
-if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(url);
+if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(url);done=true}
 else{
 const area=document.createElement("textarea");
 area.value=url;
 area.setAttribute("readonly","");
 area.style.position="fixed";
 area.style.top="-1000px";
+area.style.opacity="0";
 document.body.appendChild(area);
 area.select();
-const done=document.execCommand("copy");
+area.setSelectionRange(0,area.value.length);
+done=document.execCommand("copy");
 document.body.removeChild(area);
-if(!done)throw new Error("copy");
 }
-flash("Lien copié");
-}catch{flash("Copie impossible")}
-setOpen(false);
+}catch{done=false}
+flash(done?"Lien copié":"Copie impossible");
+dismiss();
 }
-const items:{kind:Kind;label:string;href:string;blank:boolean}[]=[
-{kind:"whatsapp",label:"WhatsApp",href:`https://wa.me/?text=${encodeURIComponent(`${title} ${url}`)}`,blank:true},
-{kind:"facebook",label:"Facebook",href:`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,blank:true},
-{kind:"x",label:"X",href:`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`,blank:true},
-{kind:"linkedin",label:"LinkedIn",href:`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,blank:true},
-{kind:"telegram",label:"Telegram",href:`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`,blank:true},
-{kind:"mail",label:"E-mail",href:`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(url)}`,blank:false}];
-return <span ref={box} style={{position:"relative",display:"inline-block"}}>
-<button type="button" className="pill action" aria-haspopup="true" aria-expanded={open} onClick={e=>{e.preventDefault();share()}} style={{display:"inline-flex",alignItems:"center",gap:".4rem",background:"transparent",color:"inherit",cursor:"pointer",...(compact?{fontSize:".72rem",padding:".3rem .5rem"}:{})}}><Icon kind="share" size={compact?15:18}/>Partager</button>
-{open&&<div style={PANEL}>
-{items.map(item=><a key={item.kind} href={item.href} target={item.blank?"_blank":undefined} rel={item.blank?"noopener noreferrer":undefined} onClick={()=>setOpen(false)} style={HEAD}><Icon kind={item.kind} size={16}/>{item.label}</a>)}
-<button type="button" onClick={e=>{e.preventDefault();copy()}} style={HEAD}><Icon kind="link" size={16}/>Copier le lien</button>
+const options:Option[]=[
+{kind:"whatsapp",label:"WhatsApp",tone:"#128C7E",blank:true,href:`https://wa.me/?text=${encodeURIComponent(`${title} ${url}`)}`},
+{kind:"facebook",label:"Facebook",tone:"#1877F2",blank:true,href:`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`},
+{kind:"x",label:"X",tone:"#0F172A",blank:true,href:`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`},
+{kind:"linkedin",label:"LinkedIn",tone:"#0A66C2",blank:true,href:`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`},
+{kind:"telegram",label:"Telegram",tone:"#229ED9",blank:true,href:`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`},
+{kind:"mail",label:"E-mail",tone:"var(--red,#c51d2e)",blank:false,href:`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(url)}`}];
+return <div style={{position:"relative",display:"inline-flex"}}>
+<button ref={trigger} type="button" className={compact?"pill action":"button"} aria-haspopup="dialog" aria-expanded={open} onClick={event=>{event.preventDefault();void share()}} style={compact?SMALL:FULL}>
+<Icon kind="share" size={compact?15:18}/>{compact?"Partager":"PARTAGER"}
+</button>
+{open&&<div onClick={event=>{if(event.target===event.currentTarget)dismiss()}} style={{position:"fixed",inset:0,zIndex:900,display:"flex",justifyContent:"center",alignItems:mobile?"flex-end":"center",padding:mobile?0:"1.25rem",background:"rgba(4,16,26,.62)",opacity:shown?1:0,transition:reduce?"none":"opacity .18s ease"}}>
+<div role="dialog" aria-modal="true" aria-label="Partager cet article" style={{width:"100%",maxWidth:mobile?"none":540,maxHeight:mobile?"88vh":"86vh",overflowY:"auto",background:"#fff",color:"var(--ink,#101820)",borderRadius:mobile?"18px 18px 0 0":14,padding:mobile?"1.1rem 1.1rem 1.5rem":"1.15rem 1.3rem 1.4rem",boxShadow:mobile?"0 -20px 50px rgba(2,6,23,.35)":"0 24px 60px rgba(2,6,23,.35)",opacity:shown?1:0,transform:shown?"none":mobile?"translateY(100%)":"translateY(14px)",transition:reduce?"none":"transform .22s ease, opacity .22s ease"}}>
+<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:".75rem",marginBottom:".85rem"}}>
+<strong style={{fontSize:".8rem",fontWeight:800,letterSpacing:".08em",textTransform:"uppercase"}}>PARTAGER CET ARTICLE</strong>
+<button ref={closer} type="button" aria-label="Fermer" onClick={event=>{event.preventDefault();dismiss()}} style={CLOSE}><Icon kind="close" size={17}/></button>
+</div>
+<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:".5rem"}}>
+{options.map(option=><a key={option.kind} href={option.href} target={option.blank?"_blank":undefined} rel={option.blank?"noopener noreferrer":undefined} onClick={()=>dismiss()} style={OPTION}><span style={{display:"inline-flex",color:option.tone}}><Icon kind={option.kind} size={18}/></span>{option.label}</a>)}
+<button type="button" onClick={event=>{event.preventDefault();void copy()}} style={{...OPTION,borderColor:"#f0c9cd",background:"#fff6f7",color:"var(--red,#c51d2e)",fontWeight:700}}><Icon kind="link" size={18}/>Copier le lien</button>
+</div>
+</div>
 </div>}
-{note&&<span role="status" className="meta" style={{marginLeft:".5rem"}}>{note}</span>}
-</span>;
+{note&&<div role="status" aria-live="polite" style={{position:"fixed",left:"50%",bottom:"1.4rem",transform:"translateX(-50%)",zIndex:1000,background:"#102a43",color:"#fff",padding:".55rem 1rem",borderRadius:999,fontSize:".78rem",fontWeight:700,boxShadow:"0 10px 30px rgba(2,6,23,.35)",pointerEvents:"none"}}>{note}</div>}
+</div>;
 }

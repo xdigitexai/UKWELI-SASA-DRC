@@ -50,3 +50,96 @@ body{background:#fff;color:#101820}.utility{background:#0b2135;color:#dce6ee;fon
 .share-copied{color:var(--red);font-weight:700}
 
 @media (max-width:640px){.notif-card{padding:1.1rem}.notif-actions{justify-content:stretch}.notif-actions .button{flex:1}}
+
+/* ══════════════════════════════════════════════════════════════
+   UKWELISASA — engagement + mobile shell upgrade
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── real view counts ── */
+.views{display:inline-flex;align-items:center;gap:.3rem;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.views svg{flex:0 0 auto;opacity:.7}
+.lead-content .views{color:#e9c9ce}
+.lead-content .views svg{opacity:.9}
+
+/* ── article action bar ── */
+.engagement .share{align-items:center;gap:.5rem}
+.engagement .share .pill{min-height:40px;white-space:nowrap}
+@media(max-width:430px){
+  .engagement{padding:1.05rem}
+  .engagement .share{gap:.4rem}
+  .engagement .share .pill{font-size:.74rem;padding:.4rem .55rem;min-height:38px}
+}
+
+/* ── hero headline stays readable on narrow phones ── */
+@media(max-width:800px){
+  .lead h1{font-size:clamp(2.05rem,8.4vw,2.7rem);line-height:1.06}
+  .lead-content{padding:1.05rem}
+}
+
+/* ── notification bell ── */
+.notif-bell-wrap{position:relative;display:inline-flex;align-items:center}
+.notif-bell{position:relative;display:inline-flex;align-items:center;gap:.45rem;border:1px solid var(--line);background:#fff;color:var(--navy);font:inherit;font-size:.78rem;font-weight:800;padding:.45rem .75rem;border-radius:999px;cursor:pointer;white-space:nowrap}
+.notif-bell:hover{border-color:var(--navy)}
+.notif-bell.is-on{background:var(--navy);border-color:var(--navy);color:#fff}
+.notif-bell.is-icon{border:0;background:none;padding:.4rem;color:var(--navy)}
+.notif-bell.is-icon.is-on{background:none}
+.notif-dot{position:absolute;top:3px;right:3px;width:8px;height:8px;border-radius:50%;background:var(--red);border:2px solid #fff}
+.notif-bell.is-on .notif-dot{border-color:var(--navy)}
+.notif-bell.is-icon .notif-dot{border-color:#fff}
+.notif-bell-note{position:absolute;top:calc(100% + .55rem);right:0;z-index:95;width:min(300px,78vw);background:var(--navy);color:#fff;font-size:.75rem;line-height:1.5;padding:.6rem .75rem;border-radius:9px;box-shadow:0 14px 32px rgba(2,6,23,.32)}
+
+/* ── mobile bottom navigation ── */
+.tabbar{display:none}
+@media(max-width:800px){
+  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:72;background:#fff;border-top:1px solid var(--line);box-shadow:0 -6px 20px rgba(2,6,23,.07);padding:.3rem .2rem calc(.3rem + env(safe-area-inset-bottom))}
+  .tabbar > a,.tabbar > button,.tabbar-notif{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;min-height:52px;border:0;background:none;font:inherit;font-size:.62rem;font-weight:700;color:var(--muted);cursor:pointer;text-decoration:none;text-align:center;padding:.25rem .1rem}
+  .tabbar > a.active{color:var(--red)}
+  .tabbar > a.active svg{stroke:var(--red)}
+  .tabbar-notif{position:relative;color:var(--muted)}
+  .tabbar-notif .notif-bell-wrap{display:block}
+  .tabbar-notif .notif-bell{border:0;background:none;padding:0;color:inherit}
+  .tabbar-notif .notif-bell.is-on{background:none;color:var(--red)}
+  .tabbar-notif .notif-dot{top:-1px;right:-4px;border-color:#fff}
+  .tabbar-notif .notif-bell-note{right:auto;left:50%;transform:translateX(-50%);top:auto;bottom:calc(100% + .55rem)}
+  /* keep content and footer clear of the fixed bar */
+  #contenu{padding-bottom:1rem}
+  .footer{padding-bottom:5.6rem}
+}
+
+/* ── breaking strip ── */
+.breaking{position:relative;z-index:5}
+.breaking a{overflow-wrap:anywhere}
+@media(max-width:600px){.breaking .container{flex-wrap:wrap;gap:.45rem}.breaking a{font-size:.92rem}}
+
+/* ── toast: compact, temporary, clear of the bottom bar ── */
+.notif-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:1.2rem;z-index:95;display:inline-flex;align-items:center;gap:.45rem;background:var(--navy);color:#fff;padding:.5rem .85rem;border-radius:999px;font-size:.8rem;font-weight:700;box-shadow:0 10px 26px rgba(2,6,23,.3);animation:toastIn .18s ease}
+.notif-toast svg{color:#7ee0a8}
+@media(max-width:800px){
+  .notif-toast{bottom:calc(4.8rem + env(safe-area-inset-bottom))}
+  .notif-card{bottom:calc(4.8rem + env(safe-area-inset-bottom))}
+}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+
+/* ── drawer: deep navy, compact rows, red active, independently scrollable ── */
+.public-drawer{position:fixed;inset:0 auto 0 0;width:84vw;max-width:340px;min-width:272px;display:flex;flex-direction:column;overflow:hidden;background:#08263A;color:#eef4f8;z-index:80;padding:0;transform:translateX(-105%);transition:transform .24s ease}
+.public-drawer.open{transform:none}
+.drawer-head{position:relative;display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem;padding:.8rem .9rem .7rem;background:#0B2E46;border-bottom:1px solid rgba(255,255,255,.15);flex:0 0 auto}
+.drawer-brand strong{display:block;font-family:Georgia,serif;font-size:1rem;letter-spacing:-.02em;color:#fff}
+.drawer-brand span{display:block;margin-top:.15rem;font-size:.58rem;letter-spacing:.13em;text-transform:uppercase;color:#9fb8c9}
+.drawer-close{color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:8px;padding:.25rem}
+.drawer-close:hover{background:rgba(255,255,255,.14)}
+.drawer-body{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:.3rem .5rem .8rem}
+.drawer-body a{display:flex;align-items:center;gap:.7rem;min-height:50px;padding:.45rem .7rem;border-radius:9px;color:#d8e4ed;font-size:1rem;font-weight:600}
+.drawer-body a svg{flex:0 0 auto;opacity:.8}
+.drawer-body a:hover{background:rgba(255,255,255,.09);color:#fff}
+.drawer-body a.active{background:var(--red);color:#fff;font-weight:800}
+.drawer-body a.active svg{opacity:1}
+.drawer-body hr{border:0;border-top:1px solid rgba(255,255,255,.16);margin:.55rem .7rem}
+.drawer-foot{flex:0 0 auto;padding:.7rem .9rem calc(.8rem + env(safe-area-inset-bottom));background:#0B2E46;border-top:1px solid rgba(255,255,255,.15)}
+.drawer-foot a{display:block;text-align:center;padding:.62rem;border-radius:9px;background:rgba(255,255,255,.11);color:#fff;font-weight:700;font-size:.85rem}
+.drawer-foot a:hover{background:rgba(255,255,255,.2)}
+body.drawer-open{overflow:hidden}
+
+@media (prefers-reduced-motion: reduce){
+  .public-drawer,.public-overlay,.notif-toast{transition:none!important;animation:none!important}
+}
